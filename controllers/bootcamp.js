@@ -8,6 +8,7 @@ exports.getBootcamps = async (req, res, next)=>{
       //get all bootcamps info from database using async
     const bootcamps = await Bootcamp.find();
     res.send({
+        count: bootcamps.length,
         success: true,
         data: bootcamps,
     }).status(200);
