@@ -62,7 +62,7 @@ exports.createBootcamp = async (req, res, next)=>{
 exports.updateBootcamp = async (req, res, next)=>{
     //update a bootcamp
    try {
-       const updateboot = await Bootcamp.findByIdAndUpdate({_id: req.params.id})
+       const updateboot = await Bootcamp.findByIdAndUpdate({_id: req.params.id}, {$set: req.body}, {new: true})
        res.send({
            success: true,
            data: updateboot
