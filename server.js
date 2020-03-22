@@ -13,7 +13,7 @@ connectDB();
 
 //load my own modules
 const bootcampRoute = require('./routes/bootcamp');
-const errorHnadler = require('./middleware/error');
+const errorHandler = require('./middleware/error');
 //const logger = require('./middleware/logger');
 
 
@@ -41,7 +41,7 @@ app.use(bodyParser.json());
 app.use('/api/v1/bootcamp', bootcampRoute);
 
 //error handler have to be before "app.use('/api/v1/bootcamp', bootcampRoute)"
-app.use(errorHnadler);
+app.use(errorHandler);
 
 
 
