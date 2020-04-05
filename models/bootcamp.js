@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const slugify = require('slugify');
+const geoCode = require('../utils/geoCode');
+const log = require('../utils/log');
 
 const BootcampSchema = new Schema({
 
@@ -107,4 +110,32 @@ const BootcampSchema = new Schema({
 
 });
 
+
+
+
+
+//ceate slugify middleware
+BootcampSchema.pre('save', function(next){
+    this.slug = slugify(this.name, "_", {lower: true});
+next();
+});
+
+BootcampSchema.pre('save', async function(next){
+    let loc = await geoCode.geoLocation(this.address);
+    //log(loc[0].city);
+
+    this.location = {
+        type: 'Point',
+        coordinates: [loc[0].longitude, loc[0].latitude],
+        formattedAddress: loc[0].formattedAddress,
+        street: loc[0].streetName,
+        city: loc[0].city,
+        state: loc[0].stateCode,
+        zipcode: loc[0].zipcode,
+        country: loc[0].countryCode,
+    }
+//don't save the address
+this.address = undefined;
+    next();
+});
 module.exports = mongoose.model('Bootcamp', BootcampSchema);

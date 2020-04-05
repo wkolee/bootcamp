@@ -1,11 +1,12 @@
 const ErrorResponse = require('../utils/errorResponse')
 const log = require('../utils/log')
 
-const errorHnadler = (err, req, res, next)=>{
+const errorHandler = (err, req, res, next)=>{
     let error = { ...err };
+    
     error.message = err.message;
 
-    log(err)
+    //log(err)
     //log(err.name) 
     //mongoose bad object ID
     if(err.name === 'CastError'){
@@ -24,15 +25,10 @@ const errorHnadler = (err, req, res, next)=>{
 
     //check for validation of fields
     if(err.name === 'ValidationError'){
-        const msgArry = Object.values(err.errors).map(val => val.message);        
-        const message = `${msgArry}`
-        error = new ErrorResponse(message, 400);
-
+            const msgArry = Object.values(err.errors).map(val => val.message);        
+            message = `${msgArry}`
+            error = new ErrorResponse(message, 400);
     }
-
-
-
-
 
     res.status(error.statusCode || 500).json({
         success: false,
@@ -42,4 +38,4 @@ const errorHnadler = (err, req, res, next)=>{
 
 
 
-module.exports = errorHnadler;
+module.exports = errorHandler;
