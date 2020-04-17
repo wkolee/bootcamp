@@ -9,8 +9,12 @@ dotenv.config({path:'./config/config.env'});
 
 //load model
 const Bootcamp = require('./models/bootcamp');
+
+//load courses model
+const Course = require('./models/courses');
+
 mongoose.connect(process.env.DATABASE_CON, 
-    {
+{
         useCreateIndex: true, 
         useFindAndModify: false, 
         useNewUrlParser: true, 
@@ -22,7 +26,11 @@ const bootcamps = JSON.parse(
     fs.readFileSync(`${__dirname}/_data/bootcamps.json`, 'utf-8')
 );
 
-//import data into database
+const courses = JSON.parse(
+    fs.readFileSync(`${__dirname}/_data/courses.json`, 'utf-8')
+);
+
+//import Bootcamp data into database
 const importData = async ()=>{
     try{
         await Bootcamp.create(bootcamps);
@@ -34,7 +42,7 @@ const importData = async ()=>{
     }
 }
 
-//delete data
+//delete Bootcamp data
 const delData = async ()=>{
    try {
        await Bootcamp.deleteMany();
@@ -45,8 +53,32 @@ const delData = async ()=>{
    }
 }
 
+
+//import courses
+const importCourse = async ()=>{
+    try {
+        await Course.create(courses);
+        log('COURSES BEEN IMPORTED'.green.inverse);
+    } catch (err) {
+        console.error(err);
+    }
+    
+}
+//delete courses
+const delCourses = async ()=>{
+    try {
+        await Course.deleteMany();
+        log('COURSES BEEN DELETED'.red.inverse);
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+
 if(process.argv[2] === '-i'){
     importData();
+    importCourse();
 }else if(process.argv[2] === '-d'){
     delData();
+    delCourses();
 }

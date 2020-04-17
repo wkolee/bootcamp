@@ -67,6 +67,7 @@ const BootcampSchema = new Schema({
         type: [String],
         required: true,
         enum: [
+        
             'Web Development',
             'Mobile Development',
             'UI/UX',
@@ -108,11 +109,14 @@ const BootcampSchema = new Schema({
         default: Date.now
     }
 
+}, {
+    toObject: {
+        virtuals: true
+    },
+    toJSON: {
+        virtuals: true
+    }
 });
-
-
-
-
 
 //ceate slugify middleware
 BootcampSchema.pre('save', function(next){
@@ -137,5 +141,20 @@ BootcampSchema.pre('save', async function(next){
 //don't save the address
 this.address = undefined;
     next();
+});
+
+//delete courses when a bootcamp is deleted
+BootcampSchema.pre('remove',async function(next){
+    await this.model('Course').deleteMany({bootcamp: this._id});
+    next();
+});
+
+
+//populate courses into bootcamp
+BootcampSchema.virtual('courses', {
+    ref: 'Course',
+    localField: '_id',
+    foreignField: 'bootcamp',
+    justOne: false
 });
 module.exports = mongoose.model('Bootcamp', BootcampSchema);
