@@ -9,10 +9,15 @@ const {
     updateCourse,
     delCourse,
 } = require('../controllers/courses');
+const Course = require('../models/courses');
+const advanceResults = require('../middleware/advanceResult');
 
 
 //get all courses
-router.get('/', getCourses);
+router.get('/', advanceResults(Course, {
+    path:'bootcamp',
+    select: 'name description'
+}), getCourses);
 
 //get single course
 router.get('/:id', getSingle);

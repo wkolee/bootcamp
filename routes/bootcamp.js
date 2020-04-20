@@ -10,7 +10,10 @@ const {
     deleteBootcamp,
     getBootcamp,
     getRadius,
+    picture
 } = require('../controllers/bootcamp');
+const Bootcamp = require('../models/bootcamp');
+const advanceResults = require('../middleware/advanceResult');
 
 
 
@@ -23,7 +26,7 @@ router.use('/:bootcampId/courses', CourseRoute);
 
 
 //get all bootcamp
-router.get('/', getBootcamps);
+router.get('/', advanceResults(Bootcamp, 'courses'), getBootcamps);
 
 //get a single bootcamp
 router.get('/:id', getBootcamp);
@@ -45,6 +48,7 @@ router.delete('/:id', deleteBootcamp);
 //get radius
 router.get('/radius/:zipCode/:miles', getRadius);
 
-
+//picture route
+router.put('/:id/photo', picture);
 
 module.exports = router;
