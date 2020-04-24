@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router({mergeParams:true});
+const {protectRoute} = require('../middleware/auth');
 
 
 const {
@@ -22,11 +23,11 @@ router.get('/', advanceResults(Course, {
 //get single course
 router.get('/:id', getSingle);
 //update course
-router.put('/:id', updateCourse);
+router.put('/:id',protectRoute, updateCourse);
 //delete a course 
-router.delete('/:id', delCourse);
+router.delete('/:id',protectRoute, delCourse);
 
 //add a course
-router.post('/', addCourse);
+router.post('/', protectRoute,addCourse);
 
 module.exports = router;

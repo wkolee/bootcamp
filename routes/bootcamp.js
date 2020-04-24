@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
+const {protectRoute} = require('../middleware/auth');
+
+
 
 const { 
     getBootcamps, 
@@ -20,10 +21,8 @@ const advanceResults = require('../middleware/advanceResult');
 //include other resource routes
 const CourseRoute = require('../routes/course');
 
-
 //re-route
 router.use('/:bootcampId/courses', CourseRoute);
-
 
 //get all bootcamp
 router.get('/', advanceResults(Bootcamp, 'courses'), getBootcamps);
@@ -32,13 +31,13 @@ router.get('/', advanceResults(Bootcamp, 'courses'), getBootcamps);
 router.get('/:id', getBootcamp);
 
 //post to bootcamp
-router.post('/', createBootcamp);
+router.post('/', protectRoute, createBootcamp);
 
 //update
-router.put('/:id', updateBootcamp);
+router.put('/:id',protectRoute, updateBootcamp);
 
 //delete
-router.delete('/:id', deleteBootcamp);
+router.delete('/:id', protectRoute, deleteBootcamp);
 
 
 //post route for picture
@@ -49,6 +48,6 @@ router.delete('/:id', deleteBootcamp);
 router.get('/radius/:zipCode/:miles', getRadius);
 
 //picture route
-router.put('/:id/photo', picture);
+router.put('/:id/photo',protectRoute, picture);
 
 module.exports = router;

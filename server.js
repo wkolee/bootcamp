@@ -4,9 +4,9 @@ const path = require('path');
 const dotenv = require('dotenv');
 const colors = require('colors');
 const morgan = require('morgan');
-const bodyParser = require('body-parser');
 const connectDB = require('./config/db');
 const fileupload = require('express-fileupload');
+const cookieParser = require('cookie-parser');
 //load env vars
 dotenv.config({path: './config/config.env' });
 
@@ -16,6 +16,7 @@ connectDB();
 //load my own modules
 const bootcampRoute = require('./routes/bootcamp');
 const courseRoute = require('./routes/course');
+const authRoute = require('./routes/auth');
 const errorHandler = require('./middleware/error');
 //const logger = require('./middleware/logger');
 
@@ -30,20 +31,18 @@ const errorHandler = require('./middleware/error');
 if(process.env.NODE_ENV === 'development'){
     app.use(morgan('dev'));
 }
-
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-
-
-
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(cookieParser());
 
 //set static folder
 app.use(express.static(path.join(__dirname, 'public')));
-
 app.use(fileupload());
+
 //app.use(logger);
 app.use('/api/v1/bootcamps', bootcampRoute);
 app.use('/api/v1/courses', courseRoute);
+app.use('/api/v1/auth', authRoute);
 
 //error handler have to be before "app.use('/api/v1/bootcamp', bootcampRoute)"
 app.use(errorHandler);
