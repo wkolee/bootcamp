@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const log = require('../utils/log');
 const User = require('../models/user');
 
+
+//PROTECT ROUTE
 exports.protectRoute = asyncHandler.handleAsync(async (req, res, next)=>{
     let token;
     if(req.headers.authorization && req.headers.authorization.startsWith('Bearer')){
@@ -27,3 +29,14 @@ exports.protectRoute = asyncHandler.handleAsync(async (req, res, next)=>{
         return next(new ErrorResponse('Not Authorize', 401))
    }
 });
+
+//authorize user by roles
+exports.authorize =  (...roles)=>{
+    return (req, res, next)=>{
+        if(!roles.includes(req.user.role)){
+            return next(new ErrorResponse(`User with the role of ${req.user.role} does not have access`, 403))
+        }
+        next();
+    }
+
+}

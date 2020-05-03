@@ -12,6 +12,8 @@ const Bootcamp = require('./models/bootcamp');
 
 //load courses model
 const Course = require('./models/courses');
+//user model
+const User = require('./models/user');
 
 mongoose.connect(process.env.DATABASE_CON, 
 {
@@ -30,10 +32,15 @@ const courses = JSON.parse(
     fs.readFileSync(`${__dirname}/_data/courses.json`, 'utf-8')
 );
 
+const users = JSON.parse(
+    fs.readFileSync(`${__dirname}/_data/users.json`, 'utf-8')
+);
 //import Bootcamp data into database
 const importData = async ()=>{
     try{
         await Bootcamp.create(bootcamps);
+        await Course.create(courses);
+        await User.create(users);
         log('DATA IMPORTED'.green.inverse);
         process.exit();
     }
@@ -46,6 +53,8 @@ const importData = async ()=>{
 const delData = async ()=>{
    try {
        await Bootcamp.deleteMany();
+       await Course.deleteMany();
+       await User.deleteMany();
        log('ALL DATA HAVE BEEN DESTROY'.red.inverse);
        process.exit();
    } catch (err) {
@@ -54,31 +63,9 @@ const delData = async ()=>{
 }
 
 
-//import courses
-const importCourse = async ()=>{
-    try {
-        await Course.create(courses);
-        log('COURSES BEEN IMPORTED'.green.inverse);
-    } catch (err) {
-        console.error(err);
-    }
-    
-}
-//delete courses
-const delCourses = async ()=>{
-    try {
-        await Course.deleteMany();
-        log('COURSES BEEN DELETED'.red.inverse);
-    } catch (err) {
-        console.error(err);
-    }
-}
-
 
 if(process.argv[2] === '-i'){
-    importData();
-    importCourse();
+    importData(); 
 }else if(process.argv[2] === '-d'){
-    delData();
-    delCourses();
+    delData();  
 }

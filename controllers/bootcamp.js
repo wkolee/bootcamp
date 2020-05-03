@@ -13,6 +13,7 @@ const path = require('path');
 //@access   public
 exports.getBootcamps = asyncHandler.handleAsync( async (req, res, next)=>{
       res.status(200).json(res.advanceResults);  
+      
 });
 
 //@desc    get a single bootcamp 
@@ -39,7 +40,14 @@ exports.getBootcamp = asyncHandler.handleAsync(async (req, res, next)=>{
 //@route    POST /api/v1/bootcamp
 //@access   private
 exports.createBootcamp = asyncHandler.handleAsync(async (req, res, next)=>{
-    //create a bootcamp
+        //add user
+        req.body.user = req.user.id;
+        //bootcamp publisher can only post one 
+        const publishBootcamp = await Bootcamp.findOne({user: req.user.id});
+        //see if there's ,ore then one bootcamp already pblish by current user
+        if(publishBootcamp && req.user.role != 'admin'){
+            return next(new ErrorResponse(`User role 'user: ${req.user.role}' can only post one time`,400));
+        }
         const bootcamp = await Bootcamp.create(req.body);
         res.status(200).json({
         success: true, 
@@ -54,21 +62,22 @@ exports.createBootcamp = asyncHandler.handleAsync(async (req, res, next)=>{
 //@access   private
 exports.updateBootcamp = asyncHandler.handleAsync(async (req, res, next)=>{
         //update a bootcamp
-            const updateboot = await Bootcamp.findByIdAndUpdate({_id: req.params.id}, {$set: req.body}, {new: true, runValidators: true});
+            let updateboot = await Bootcamp.findById({_id: req.params.id});
             //if the bootcamp does not exist
             if(!updateboot){
-                res.status(404).json({
-                    success: true,
-                    msg: `Bootcamp with a ID of ${req.params.id} does not exits or have been deleted`,
-                    bootcamp: {}
-                });
+                return next(new ErrorResponse('bootcamp does not exist', 404));
             }
-            else{
-                res.status(200).json({
-                    success: true,
-                    bootcamp: updateboot,
-                })
+            //if bootcamp is find make sure user is owner of that bootcamp
+            if(updateboot.user.toString() != req.user.id && req.user.role != 'admin'){
+                return next(new ErrorResponse(`${req.user.name} does not have ownership to this bootcamp`, 404));
             }
+
+            updateboot = await Bootcamp.findByIdAndUpdate(req.params.id, {$set: req.body}, {new: true, runValidators: true});
+            res.status(200).json({
+                success: true,
+                bootcamp: updateboot,
+            })
+        
     }
 );
 
@@ -77,22 +86,24 @@ exports.updateBootcamp = asyncHandler.handleAsync(async (req, res, next)=>{
 //@access   private
 exports.deleteBootcamp = asyncHandler.handleAsync(async (req, res, next)=>{
     //delete a bootcamp
-        const deleteBoot = await Bootcamp.findById({_id: req.params.id});
+        let deleteBoot = await Bootcamp.findById({_id: req.params.id});
         if(!deleteBoot){
-            res.status(404).json({
-                success: true,
-                msg: `Bootcamp with a ID of ${req.params.id} does not exits or have been deleted`,
-                bootcamp: {}
-            });
-        }else{
-            
+            return next(new ErrorResponse('Bootcamp does not exist', 401))
+        }
+
+
+        //bootcamp exist, check if current user own bootcamp before deleting
+        if(deleteBoot.user.toString() != req.user.id && req.user.role != 'admin'){
+            return next(new ErrorResponse(`${req.user.name} does not own this bootcamp`, 401));
+        }
+        //if the current user is the owner, go ahead and delete
             deleteBoot.remove();
             res.json({
                 success: true,
                 DelMsg: "Bootcamp have been deleted!"
             }).status(200);
         }
-});
+);
 
 
 
@@ -124,10 +135,14 @@ exports.getRadius = asyncHandler.handleAsync(async (req, res, next)=>{
 });
 //upload image
 exports.picture = asyncHandler.handleAsync(async (req, res, next)=>{
-    const bootcamp =  await Bootcamp.findById(req.params.id);
+    let bootcamp =  await Bootcamp.findById(req.params.id);
     //check for bootcamp
     if(!bootcamp){
         return next(new ErrorResponse('Bootcamp not found', 404));
+    }
+    //check if current user own bootcamp
+    if(bootcamp.user.toString() != req.user.id && req.user.role != 'admin'){
+        return next(new ErrorResponse('this user does not own this bootcamp', 404))
     }
     //check if file is an image
     const file = req.files.pic;
@@ -140,13 +155,14 @@ exports.picture = asyncHandler.handleAsync(async (req, res, next)=>{
     }
     //create custom name for img
     file.name = `photo_${bootcamp._id}${path.parse(file.name).ext}`;
-    log(file)
+
 
     file.mv(`${process.env.FILE_UPLOAD_PATH}/${file.name}`, async function(err){
         if(err){
             return next(new ErrorResponse(`Problem with uploading image`, 500));
         }
-        await Bootcamp.findByIdAndUpdate(req.params.id, {
+
+        bootcamp = await Bootcamp.findByIdAndUpdate(req.params.id, {
             photo: file.name
         });
         res.status(200).json({

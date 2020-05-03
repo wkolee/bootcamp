@@ -3,7 +3,7 @@ const log = require('../utils/log')
 
 const errorHandler = (err, req, res, next)=>{
     let error = { ...err };
-    
+    log(err)
     error.message = err.message;
 
     //log(err)

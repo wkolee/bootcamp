@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
+const Crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
     email: {
@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, 'please add your password'],
         minLength: 7,
-        maxLength: 100,
+        maxLength: 200,
         select: false
     },
     role: {
@@ -32,7 +32,10 @@ const userSchema = new mongoose.Schema({
     resetPasswordToken: {
         type: String
     },
-    resetPasswordDate: {
+    resetPasswordExpire:{
+        type: Date
+    },
+    passwordResetAt: {
         type: Date
     },
     createAt: {
@@ -43,6 +46,9 @@ const userSchema = new mongoose.Schema({
 
 //hash password before saving into database
 userSchema.pre('save', async function (next) {
+    if(!this.isModified('password')){
+        next();
+    }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
 
@@ -62,6 +68,23 @@ userSchema.methods.signToken = function () {
 //compare password at login
 userSchema.methods.passwordMatch = async function(plainPassword, hashPassword){
     return await bcrypt.compare(plainPassword, this.password);
+}
+
+userSchema.methods.getresetToken = function(){
+    //generate random bytes
+    const resetToken = Crypto.randomBytes(20).toString('hex');
+  
+    //hash token and set it to resetPasswordToken
+    this.resetPasswordToken = Crypto.createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+     //set when password was updated
+    this.passwordResetAt = Date.now();
+   //set expire
+    this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+    //console.log(typeof resetToken)
+    return resetToken;
+    
 }
 
 module.exports = mongoose.model('User', userSchema);

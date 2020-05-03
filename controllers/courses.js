@@ -49,13 +49,15 @@ exports.getSingle = asyncHandler.handleAsync(async (req, res, next) => {
 //add a course
 exports.addCourse = asyncHandler.handleAsync(async (req, res, next) => {
     req.body.bootcamp = req.params.bootcampId;
+    req.body.user = req.user.id;
     const bootcamp = await Bootcamp.findById(req.params.bootcampId);
     if(!bootcamp){
-        res.status(404).json({
-            success: true,
-            msg: `Bootcamp with the ID of ${req.params.bootcampId} does not exist or have been deleted`
-        });
-    }else{
+        return next(new ErrorResponse('bootcamp does not exist', 404));
+    }
+    //course exist, check if current user own bootcamp before deleting
+    if(bootcamp.user.toString() != req.user.id && req.user.role != 'admin'){
+        return next(new ErrorResponse(`${req.user.name} does not own this bootcamp`, 401));
+    }
 
         const course = await Course.create(req.body);
         res.status(200).json({
@@ -63,11 +65,21 @@ exports.addCourse = asyncHandler.handleAsync(async (req, res, next) => {
             course: course
         })
     }
-});
+);
 
 //update course
 exports.updateCourse = asyncHandler.handleAsync(async (req, res, next) => {
-    const updateCourse = await Course.findByIdAndUpdate({
+    let updateCourse = await Course.findById(req.params.id);
+
+    if (!updateCourse) {
+        return next(new ErrorResponse('course does not exist', 404));
+    } 
+    //course exist, check if current user own bootcamp before deleting
+    if(updateCourse.user.toString() != req.user.id && req.user.role != 'admin'){
+        return next(new ErrorResponse(`${req.user.name} does not own this course`, 401));
+    }
+
+    updateCourse = await Course.findOneAndUpdate({
         _id: req.params.id
     }, {
         $set: req.body
@@ -79,30 +91,24 @@ exports.updateCourse = asyncHandler.handleAsync(async (req, res, next) => {
         select: 'name description'
     });
 
-    if (updateCourse) {
         res.status(200).json({
             success: true,
             course: updateCourse
         })
-    } else {
-        res.status(404).json({
-            success: true,
-            msg: `Course with the ID of ${req.params.id} does not exist or have bee deleted`,
-            course: {}
-        })
-    }
+    
 });
 
 //delete courses
 exports.delCourse = asyncHandler.handleAsync(async (req, res, next) => {
-    const delCourse = await Course.findById({_id: req.params.id});
+    let delCourse = await Course.findById({_id: req.params.id});
     if(!delCourse){
-        res.status(404).json({
-            success: true,
-            msg: `Course with the ID of ${req.params.id} does not exist or have been deleted`,
-        });
+      return next(new ErrorResponse('course does not exist', 404));
     }
-    await Course.remove({_id: req.params.id});
+    if(delCourse.user.toString() != req.user.id && req.user.role != 'admin'){
+        return next(new ErrorResponse(`${req.user.name} does not own this course`, 401));
+    }
+
+    delCourse = await Course.remove({_id: req.params.id});
     res.status(200).json({
         success: true,
         msg: `Course with the ID of ${req.params.id} deleted successfully`,
