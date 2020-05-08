@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {protectRoute} = require('../middleware/auth');
 
-const {userRegister, userLogin, currentUser, forgotPassword, resetPassword} = require('../controllers/auth');
+const {userRegister, userLogin, forgotPassword, resetPassword, logout} = require('../controllers/auth');
 //register users
 router.post('/register', userRegister);
 
@@ -11,8 +11,7 @@ router.post('/login', userLogin);
 //reset password
 router.post('/forgotpassword', forgotPassword);
 router.put('/resetpassword/:token', resetPassword);
+router.get('/logout',protectRoute, logout);
 
-//get login user
-router.get('/profile',protectRoute, currentUser);
 
 module.exports = router;

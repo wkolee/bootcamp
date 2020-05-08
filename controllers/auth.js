@@ -5,6 +5,7 @@ const User = require('../models/user');
 const validate = require('../utils/validate');
 const sendMail = require('../utils/sendEmail');
 const Crypto = require('crypto');
+const sendTokenResponse = require('../utils/sendTokenResponse');
 
 //register users
 exports.userRegister = asyncHandler.handleAsync( async (req, res, next)=>{
@@ -44,15 +45,10 @@ exports.userLogin = asyncHandler.handleAsync(async (req, res, next)=>{
   sendTokenResponse(user, 200, res);
 
 });
-exports.currentUser = asyncHandler.handleAsync(async (req, res, next)=>{
-  const user = await User.findById(req.user);
-  res.status(200).json({success: true, data: user});
-});
-
 //forgot password route
 exports.forgotPassword = asyncHandler.handleAsync(async (req, res, next)=>{
   let user = await User.findOne({email: req.body.email});
-  if(!user){return new ErrorResponse('no user by that email exist', 404)}
+  if(!user){return next(new ErrorResponse('no user by that email exist', 404))}
 
   //get reset password token
   const resetToken =  user.getresetToken();
@@ -93,22 +89,12 @@ exports.resetPassword = asyncHandler.handleAsync(async (req, res, next)=>{
 });
 
 
-//send token to client side
-const sendTokenResponse = (user, statusCode, res)=>{
-  const token = user.signToken();
-  const options = {
-    expires: new Date(Date.now() + 60 * 60 * 1000) ,// 1 hour
-    httpOnly: true
-  };
-  if(process.env.NODE_ENV === 'production'){
-    options.secure = true;
-  }
-  res
-    .status(statusCode)
-    .cookie('token', token, options)
-    .json({
-      success: true,
-      token
-    });
-};
 
+exports.logout = asyncHandler.handleAsync(async(req, res, next)=>{
+  res.cookie('token', 'none', {
+    expires: new Date(Date.now()),
+    httpOnly: true
+  });
+  
+  res.status(200).json({success: true})
+})
